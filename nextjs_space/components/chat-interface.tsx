@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
@@ -24,8 +23,37 @@ import {
   Zap,
   X,
   Paperclip,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react'
+
+// Mensagens pré-prontas para análise financeira
+const quickMessages = [
+  {
+    id: 'analise-completa',
+    title: 'Análise Financeira Completa',
+    icon: FileText,
+    message: 'Faça a análise financeira completa do cliente em anexo, incluindo análise de balanço patrimonial, DRE, fluxo de caixa e indicadores financeiros principais.'
+  },
+  {
+    id: 'viabilidade',
+    title: 'Análise de Viabilidade',
+    icon: Sparkles,
+    message: 'Analise a viabilidade financeira do projeto em anexo, considerando investimento inicial, projeção de receitas, custos operacionais e retorno sobre investimento.'
+  },
+  {
+    id: 'credito',
+    title: 'Avaliação de Crédito',
+    icon: AlertCircle,
+    message: 'Realize uma avaliação de crédito detalhada do cliente com base nos documentos em anexo, analisando capacidade de pagamento, garantias e histórico financeiro.'
+  },
+  {
+    id: 'riscos',
+    title: 'Análise de Riscos',
+    icon: Settings,
+    message: 'Identifique e analise os principais riscos financeiros presentes nos documentos em anexo, incluindo riscos de liquidez, solvência e endividamento.'
+  }
+]
 
 interface Message {
   id: string
@@ -59,6 +87,7 @@ export function ChatInterface() {
   const [additionalContext, setAdditionalContext] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   const scrollToBottom = () => {
@@ -68,6 +97,14 @@ export function ChatInterface() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleQuickMessage = (message: string) => {
+    setInput(message)
+    // Focus no input após preencher
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 100)
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -86,7 +123,8 @@ export function ChatInterface() {
         })
 
         if (!response.ok) {
-          throw new Error(`Failed to upload ${file.name}`)
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+          throw new Error(errorData.error || `Failed to upload ${file.name}`)
         }
 
         return response.json()
@@ -108,11 +146,11 @@ export function ChatInterface() {
         description: `${newFiles.length} arquivo(s) enviado(s) com sucesso!`,
       })
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error)
       toast({
         title: 'Erro no Upload',
-        description: 'Falha ao enviar arquivo(s). Tente novamente.',
+        description: error.message || 'Falha ao enviar arquivo(s). Tente novamente.',
         variant: 'destructive'
       })
     } finally {
@@ -411,6 +449,43 @@ export function ChatInterface() {
           </div>
         </div>
 
+        {/* Quick Messages */}
+        {messages.length === 0 && uploadedFiles.length > 0 && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center mb-3">
+              <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                Mensagens Rápidas
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {quickMessages.map((qm) => {
+                const Icon = qm.icon
+                return (
+                  <Button
+                    key={qm.id}
+                    onClick={() => handleQuickMessage(qm.message)}
+                    variant="outline"
+                    className="h-auto py-3 px-4 justify-start text-left hover:bg-blue-100 dark:hover:bg-blue-900/40 border-2 border-blue-200 dark:border-blue-700 transition-all"
+                  >
+                    <div className="flex items-start space-x-3 w-full">
+                      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                          {qm.title}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                          {qm.message.substring(0, 80)}...
+                        </p>
+                      </div>
+                    </div>
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Uploaded Files Display */}
         {uploadedFiles.length > 0 && (
           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -609,6 +684,7 @@ export function ChatInterface() {
           <div className="flex space-x-2">
             <div className="flex-1">
               <Input
+                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
