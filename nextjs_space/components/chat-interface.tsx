@@ -414,31 +414,39 @@ export function ChatInterface() {
         {/* Uploaded Files Display */}
         {uploadedFiles.length > 0 && (
           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                Arquivos Anexados
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 flex items-center">
+                <Upload className="w-4 h-4 mr-2" />
+                Arquivos Anexados ({uploadedFiles.length})
               </h3>
             </div>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {uploadedFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-blue-100 dark:border-blue-700"
+                  className="relative group flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center space-x-2">
-                    <Paperclip className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{file.name}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      ({(file.size / 1024).toFixed(1)} KB)
-                    </span>
+                  <div className="flex flex-col items-center space-y-2 w-full">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-center w-full">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate px-2">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFile(file.id)}
                     disabled={isLoading}
+                    className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </Button>
                 </div>
               ))}
@@ -540,7 +548,7 @@ export function ChatInterface() {
                       className={`max-w-[80%] p-4 rounded-lg ${
                         message.role === 'user'
                           ? 'bg-blue-600 text-white ml-12'
-                          : 'bg-gray-100 text-gray-900 mr-12'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 mr-12'
                       }`}
                     >
                       <div className="flex items-start space-x-2">
@@ -582,7 +590,7 @@ export function ChatInterface() {
                 ))}
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-gray-100 text-gray-900 p-4 rounded-lg mr-12 max-w-[80%]">
+                    <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-4 rounded-lg mr-12 max-w-[80%]">
                       <div className="flex items-center space-x-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Pensando...</span>

@@ -70,14 +70,18 @@ export function DashboardPage() {
           {/* Header */}
           <div className="p-6 border-b">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-lg flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg">
+                <img 
+                  src="/logo.png" 
+                  alt="iFinance Logo" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                   iFinanceAI
                 </h1>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {session.user?.name || session.user?.email}
                 </p>
               </div>
