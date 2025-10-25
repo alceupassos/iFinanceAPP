@@ -46,6 +46,7 @@ model User {
   sessions      Session[]
   conversations Conversation[]
   documents     Document[]
+  files         File[]
   workspaces    WorkspaceMember[]
   auditLogs     AuditLog[]
 
@@ -192,6 +193,26 @@ model Document {
   updatedAt DateTime @updatedAt
   
   @@map("documents")
+}
+
+model File {
+  id                 String   @id @default(cuid())
+  name               String
+  originalName       String
+  mimeType           String
+  size               Int
+  cloud_storage_path String
+  extractedText      String?  @db.Text
+  userId             String
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("files")
 }
 
 // iFinance Financial Templates

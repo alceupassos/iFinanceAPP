@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { 
   Send, 
@@ -18,7 +21,10 @@ import {
   FileText, 
   Upload,
   Settings,
-  Zap
+  Zap,
+  X,
+  Paperclip,
+  AlertCircle
 } from 'lucide-react'
 
 interface Message {
@@ -32,6 +38,13 @@ interface Message {
   latency?: number
 }
 
+interface UploadedFile {
+  id: string
+  name: string
+  size: number
+  extractedText: string
+}
+
 export function ChatInterface() {
   const { data: session } = useSession() || {}
   const [messages, setMessages] = useState<Message[]>([])
@@ -39,7 +52,13 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini')
   const [selectedProvider, setSelectedProvider] = useState('auto')
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [showFinancialDialog, setShowFinancialDialog] = useState(false)
+  const [clientName, setClientName] = useState('')
+  const [additionalContext, setAdditionalContext] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   const scrollToBottom = () => {
@@ -49,6 +68,179 @@ export function ChatInterface() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0) return
+
+    setIsUploading(true)
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`)
+        }
+
+        return response.json()
+      })
+
+      const results = await Promise.all(uploadPromises)
+      
+      const newFiles = results.map(result => ({
+        id: result.fileId,
+        name: result.fileName,
+        size: result.size,
+        extractedText: result.extractedText || ''
+      }))
+
+      setUploadedFiles(prev => [...prev, ...newFiles])
+
+      toast({
+        title: 'Upload Concluído',
+        description: `${newFiles.length} arquivo(s) enviado(s) com sucesso!`,
+      })
+
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast({
+        title: 'Erro no Upload',
+        description: 'Falha ao enviar arquivo(s). Tente novamente.',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
+  }
+
+  const startFinancialAnalysis = () => {
+    if (uploadedFiles.length === 0) {
+      toast({
+        title: 'Atenção',
+        description: 'Por favor, faça upload dos arquivos financeiros antes de iniciar a análise.',
+        variant: 'destructive'
+      })
+      return
+    }
+    setShowFinancialDialog(true)
+  }
+
+  const runFinancialAnalysis = async () => {
+    if (!clientName.trim()) {
+      toast({
+        title: 'Nome do Cliente Obrigatório',
+        description: 'Por favor, informe o nome do cliente para a análise.',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    setShowFinancialDialog(false)
+    setIsLoading(true)
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: `Análise Financeira Completa - Cliente: ${clientName}${additionalContext ? `\n\nContexto Adicional: ${additionalContext}` : ''}\n\nArquivos anexados: ${uploadedFiles.map(f => f.name).join(', ')}`,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+
+    try {
+      const response = await fetch('/api/financial-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientName,
+          fileIds: uploadedFiles.map(f => f.id),
+          additionalContext
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate analysis')
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      
+      let assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        model: 'gpt-4o',
+        provider: 'iFinance'
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
+
+      let buffer = ''
+      let partialRead = ''
+
+      while (reader) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        partialRead += decoder.decode(value, { stream: true })
+        let lines = partialRead.split('\n')
+        partialRead = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') {
+              // Clear uploaded files after successful analysis
+              setUploadedFiles([])
+              setClientName('')
+              setAdditionalContext('')
+              return
+            }
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.choices?.[0]?.delta?.content) {
+                buffer += parsed.choices[0].delta.content
+                assistantMessage.content = buffer
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMessage.id ? assistantMessage : m
+                ))
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Financial analysis error:', error)
+      toast({
+        title: 'Erro na Análise',
+        description: 'Ocorreu um erro ao gerar a análise financeira. Tente novamente.',
+        variant: 'destructive'
+      })
+      setMessages(prev => prev.filter(m => m.role !== 'assistant' || m.content))
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -166,38 +358,7 @@ export function ChatInterface() {
     }
   }
 
-  const startFinancialAnalysis = () => {
-    const template = `Olá! Sou seu assistente especializado em análise financeira. 
 
-Posso ajudá-lo com:
-📊 Análise de DRE (Demonstração do Resultado do Exercício)
-💰 Análise de DFC (Demonstração de Fluxo de Caixa)
-📈 Cálculo de indicadores financeiros
-🔍 Interpretação de resultados e tendências
-💡 Recomendações estratégicas
-
-Para começar, você pode:
-1. Fazer upload de seus demonstrativos financeiros
-2. Fazer perguntas específicas sobre análise financeira
-3. Solicitar cálculos de indicadores específicos
-
-Como posso ajudá-lo hoje?`
-
-    const assistantMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: template,
-      timestamp: new Date(),
-      model: 'ifinance-template',
-      provider: 'template'
-    }
-
-    setMessages([assistantMessage])
-    toast({
-      title: 'Análise Financeira Ativada',
-      description: 'Template iFinance carregado com sucesso!'
-    })
-  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -205,17 +366,23 @@ Como posso ajudá-lo hoje?`
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Chat com IA</h1>
-            <p className="text-gray-600">Converse com múltiplos modelos de linguagem</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Chat com IA</h1>
+            <p className="text-gray-600 dark:text-gray-400">Converse com múltiplos modelos de linguagem</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={startFinancialAnalysis}
+              disabled={uploadedFiles.length === 0}
               className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
             >
               <FileText className="w-4 h-4 mr-2" />
-              Análise Financeira iFinance
+              Análise Financeira
+              {uploadedFiles.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {uploadedFiles.length}
+                </Badge>
+              )}
             </Button>
             <div className="flex gap-2">
               <Select value={selectedProvider} onValueChange={setSelectedProvider}>
@@ -243,7 +410,92 @@ Como posso ajudá-lo hoje?`
             </div>
           </div>
         </div>
+
+        {/* Uploaded Files Display */}
+        {uploadedFiles.length > 0 && (
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                Arquivos Anexados
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {uploadedFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-blue-100 dark:border-blue-700"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Paperclip className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{file.name}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({(file.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(file.id)}
+                    disabled={isLoading}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Financial Analysis Dialog */}
+      <Dialog open={showFinancialDialog} onOpenChange={setShowFinancialDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Análise Financeira Completa</DialogTitle>
+            <DialogDescription>
+              Configure os detalhes para gerar a análise financeira estruturada do cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientName">Nome do Cliente *</Label>
+              <Input
+                id="clientName"
+                placeholder="Ex: Oftprime, Empresa ABC"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="additionalContext">Contexto Adicional (Opcional)</Label>
+              <Textarea
+                id="additionalContext"
+                placeholder="Informações adicionais sobre o cliente, setor de atuação, período da análise, etc."
+                value={additionalContext}
+                onChange={(e) => setAdditionalContext(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="flex items-start space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div className="text-sm text-blue-900 dark:text-blue-100">
+                <p className="font-semibold mb-1">Arquivos anexados: {uploadedFiles.length}</p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  {uploadedFiles.map(f => f.name).join(', ')}
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFinancialDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={runFinancialAnalysis} disabled={!clientName.trim()}>
+              Gerar Análise
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Chat Container */}
       <Card className="h-[600px] flex flex-col">
@@ -357,13 +609,26 @@ Como posso ajudá-lo hoje?`
                 className="w-full"
               />
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.xlsx,.xls,.csv,.docx,.doc"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             <Button
-              onClick={() => {/* TODO: File upload */}}
+              onClick={() => fileInputRef.current?.click()}
               variant="outline"
               size="icon"
-              disabled={isLoading}
+              disabled={isUploading || isLoading}
+              title="Anexar arquivos (PDF, Excel, CSV, Word)"
             >
-              <Upload className="w-4 h-4" />
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
             </Button>
             <Button
               onClick={sendMessage}
