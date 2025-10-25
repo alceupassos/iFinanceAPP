@@ -422,29 +422,38 @@ export function ChatInterface() {
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Chat com IA</h1>
-            <p className="text-gray-600 dark:text-gray-400">Converse com múltiplos modelos de linguagem</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Chat com IA</h1>
+              <p className="text-gray-600 dark:text-gray-400">Converse com múltiplos modelos de linguagem</p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={startFinancialAnalysis}
+                disabled={uploadedFiles.length === 0}
+                className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Análise Financeira
+                {uploadedFiles.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {uploadedFiles.length}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={startFinancialAnalysis}
-              disabled={uploadedFiles.length === 0}
-              className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Análise Financeira
-              {uploadedFiles.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {uploadedFiles.length}
-                </Badge>
-              )}
-            </Button>
-            <div className="flex gap-2">
+
+          {/* Model Selection - Always Visible */}
+          <div className="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg">
+            <div className="flex items-center gap-2 flex-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                Provedor:
+              </label>
               <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -455,8 +464,14 @@ export function ChatInterface() {
                   <SelectItem value="openrouter">OpenRouter</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="flex items-center gap-2 flex-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                Modelo:
+              </label>
               <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -515,7 +530,7 @@ export function ChatInterface() {
           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 flex items-center">
-                <Upload className="w-4 h-4 mr-2" />
+                <Paperclip className="w-4 h-4 mr-2" />
                 Arquivos Anexados ({uploadedFiles.length})
               </h3>
             </div>
@@ -523,27 +538,26 @@ export function ChatInterface() {
               {uploadedFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="relative group flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow-sm hover:shadow-md transition-shadow"
+                  className="relative group flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="flex flex-col items-center space-y-2 w-full">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
-                      <FileText className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="text-center w-full">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate px-2">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center shadow-lg">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {(file.size / 1024).toFixed(1)} KB
+                    </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFile(file.id)}
                     disabled={isLoading}
-                    className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800"
+                    className="h-8 w-8 p-0 flex-shrink-0 hover:bg-red-100 dark:hover:bg-red-900/50"
+                    title="Remover arquivo"
                   >
                     <X className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </Button>
@@ -705,6 +719,32 @@ export function ChatInterface() {
         
         {/* Input Area */}
         <div className="border-t p-4">
+          {/* Attached Files Preview in Input Area */}
+          {uploadedFiles.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {uploadedFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg"
+                >
+                  <Paperclip className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[150px]">
+                    {file.name}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(file.id)}
+                    disabled={isLoading}
+                    className="h-5 w-5 p-0 hover:bg-red-100 dark:hover:bg-red-900/50 ml-1"
+                  >
+                    <X className="w-3 h-3 text-red-600 dark:text-red-400" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          
           <div className="flex space-x-2">
             <div className="flex-1">
               <Input
@@ -735,7 +775,7 @@ export function ChatInterface() {
               {isUploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Upload className="w-4 h-4" />
+                <Paperclip className="w-4 h-4" />
               )}
             </Button>
             <Button
