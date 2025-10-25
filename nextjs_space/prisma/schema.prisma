@@ -1,0 +1,303 @@
+// iFinanceAI - Comprehensive Database Schema
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/ifinance_app/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// Authentication Models (NextAuth)
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?   // For credentials authentication
+  emailVerified DateTime?
+  name          String?
+  firstName     String?
+  lastName      String?
+  companyName   String?
+  jobTitle      String?
+  image         String?
+  role          UserRole  @default(USER)
+  locale        String    @default("pt-BR")
+  timezone      String    @default("America/Sao_Paulo")
+  plan          Plan      @default(FREE)
+  
+  // Billing
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  subscriptionStatus   String?
+  subscriptionEndsAt   DateTime?
+  
+  // Usage tracking
+  tokensUsed           Int       @default(0)
+  tokensLimit          Int       @default(10000)
+  monthlyReset         DateTime  @default(now())
+  
+  // Relationships
+  accounts      Account[]
+  sessions      Session[]
+  conversations Conversation[]
+  documents     Document[]
+  workspaces    WorkspaceMember[]
+  auditLogs     AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Core Application Models
+model Workspace {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  description String?
+  settings    Json?
+  
+  members       WorkspaceMember[]
+  conversations Conversation[]
+  documents     Document[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}
+
+model Conversation {
+  id          String  @id @default(cuid())
+  title       String
+  userId      String
+  workspaceId String?
+  model       String  @default("gpt-4o-mini")
+  template    String? // For iFinance template usage
+  
+  // LLM Routing
+  preferredProvider String? // openai, anthropic, openrouter
+  routingStrategy   String  @default("cost_latency_quality")
+  
+  messages Message[]
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("conversations")
+}
+
+model Message {
+  id             String @id @default(cuid())
+  conversationId String
+  content        String @db.Text
+  role           String // user, assistant, system
+  model          String?
+  provider       String? // Which LLM provider was used
+  tokenCount     Int?
+  cost           Float?
+  latency        Int? // Response time in milliseconds
+  
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@map("messages")
+}
+
+model Document {
+  id          String      @id @default(cuid())
+  filename    String
+  originalName String
+  size        Int
+  mimeType    String
+  url         String
+  userId      String
+  workspaceId String?
+  status      DocumentStatus @default(UPLOADING)
+  
+  // For RAG/Search
+  processed   Boolean @default(false)
+  vectorized  Boolean @default(false)
+  searchIndex String? // MeiliSearch index ID
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("documents")
+}
+
+// iFinance Financial Templates
+model FinancialTemplate {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  prompt      String @db.Text
+  category    String @default("financial_analysis")
+  language    String @default("pt-BR")
+  active      Boolean @default(true)
+  
+  // Template configuration
+  model       String  @default("gpt-4o-mini")
+  temperature Float   @default(0.3)
+  maxTokens   Int     @default(4000)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("financial_templates")
+}
+
+// Audit and Monitoring
+model AuditLog {
+  id        String     @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+  
+  @@map("audit_logs")
+}
+
+model Usage {
+  id           String    @id @default(cuid())
+  userId       String?
+  provider     String    // openai, anthropic, openrouter
+  model        String
+  tokenCount   Int
+  cost         Float
+  requestType  String    // chat, completion, embedding
+  responseTime Int?      // milliseconds
+  
+  date DateTime @default(now())
+  
+  @@map("usage_logs")
+}
+
+// Subscription and Billing
+model Subscription {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  stripeCustomerId   String            @unique
+  stripeSubscriptionId String          @unique
+  stripePriceId      String
+  status             SubscriptionStatus
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean          @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("subscriptions")
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum WorkspaceRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+enum Plan {
+  FREE
+  START
+  PRO
+  ENTERPRISE
+}
+
+enum DocumentStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  ERROR
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAST_DUE
+  TRIALING
+  UNPAID
+}
