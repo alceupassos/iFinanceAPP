@@ -5,7 +5,7 @@
 
 Seu repositório local já está configurado e pronto para sincronizar com:
 ```
-https://github.com/alceupassos/ifinanceone
+https://github.com/alceupassos/iFinanceAPP
 ```
 
 ## 📋 Passo a Passo Final
@@ -15,7 +15,7 @@ https://github.com/alceupassos/ifinanceone
 Acesse: **https://github.com/new**
 
 Configure:
-- **Repository name**: `ifinanceone`
+- **Repository name**: `iFinanceAPP`
 - **Description**: `iFinanceAI - Plataforma de Análise Financeira com IA`
 - **Visibility**: Escolha Public ou Private
 - ⚠️ **IMPORTANTE**: Deixe DESMARCADAS as opções:
@@ -45,7 +45,7 @@ Você será solicitado a fornecer credenciais:
 **Como criar o Token:**
 1. Acesse: https://github.com/settings/tokens
 2. Clique em **"Generate new token (classic)"**
-3. Dê um nome: `ifinanceone-deploy`
+3. Dê um nome: `iFinanceAPP-deploy`
 4. Selecione o escopo: `repo` (full control)
 5. Clique em **"Generate token"**
 6. **Copie o token** (você não verá novamente!)
@@ -73,7 +73,7 @@ git push -u origin main
 
 Após o push bem-sucedido, acesse:
 ```
-https://github.com/alceupassos/ifinanceone
+https://github.com/alceupassos/iFinanceAPP
 ```
 
 Você verá todo o código do projeto!
@@ -110,7 +110,7 @@ git log --oneline -10
 ## 📊 Estrutura Atual do Repositório
 
 ```
-ifinanceone/
+iFinanceAPP/
 ├── nextjs_space/          # Aplicação Next.js
 ├── sync-github.sh         # Script de sincronização
 ├── SYNC_INSTRUCTIONS.md   # Documentação completa
@@ -141,7 +141,7 @@ git push -u origin main
 ## 🎯 Status Atual
 
 ✅ Repositório local inicializado  
-✅ Remote configurado: `https://github.com/alceupassos/ifinanceone.git`  
+✅ Remote configurado: `https://github.com/alceupassos/iFinanceAPP.git`  
 ✅ Branch renomeada para `main`  
 ✅ Commits prontos para push (5 commits)  
 ⏳ **Aguardando**: Push inicial para o GitHub  
@@ -152,7 +152,7 @@ git push -u origin main
 
 1. ✅ Criar repositório no GitHub
 2. ✅ Executar `git push -u origin main`
-3. ✅ Verificar no navegador: https://github.com/alceupassos/ifinanceone
+3. ✅ Verificar no navegador: https://github.com/alceupassos/iFinanceAPP
 
 ---
 

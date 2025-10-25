@@ -2,7 +2,7 @@
 
 > Plataforma inteligente de análise financeira com IA integrada
 
-[![Deploy](https://img.shields.io/badge/deploy-live-success)](https://ifinanceone.abacusai.app)
+[![Deploy](https://img.shields.io/badge/deploy-live-success)](https://iFinanceAPP.abacusai.app)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.7-2D3748)](https://www.prisma.io/)
@@ -53,8 +53,8 @@ iFinanceAI é uma plataforma completa de análise financeira que utiliza intelig
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/SEU_USERNAME/ifinanceone.git
-cd ifinanceone/nextjs_space
+git clone https://github.com/SEU_USERNAME/iFinanceAPP.git
+cd iFinanceAPP/nextjs_space
 ```
 
 2. **Instale as dependências**
@@ -160,7 +160,7 @@ ifinance_app/
 
 ## 🌐 Deploy
 
-A aplicação está em produção em: **[https://ifinanceone.abacusai.app](https://ifinanceone.abacusai.app)**
+A aplicação está em produção em: **[https://iFinanceAPP.abacusai.app](https://iFinanceAPP.abacusai.app)**
 
 ### Fazer Deploy
 

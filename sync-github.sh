@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script de sincronização com GitHub - ifinanceone
+# Script de sincronização com GitHub - iFinanceAPP
 
 echo "============================================"
-echo "   Sincronização GitHub - iFinanceOne      "
+echo "   Sincronização GitHub - iFinanceAPP      "
 echo "============================================"
 echo ""
 
@@ -25,9 +25,9 @@ else
     read -p "Usar SSH (s) ou HTTPS (n)? [n]: " USE_SSH
     
     if [ "$USE_SSH" = "s" ] || [ "$USE_SSH" = "S" ]; then
-        REMOTE_URL="git@github.com:${GH_USERNAME}/ifinanceone.git"
+        REMOTE_URL="git@github.com:${GH_USERNAME}/iFinanceAPP.git"
     else
-        REMOTE_URL="https://github.com/${GH_USERNAME}/ifinanceone.git"
+        REMOTE_URL="https://github.com/${GH_USERNAME}/iFinanceAPP.git"
     fi
     
     echo "→ Configurando remote: $REMOTE_URL"
@@ -49,5 +49,5 @@ echo "   ✓ Sincronização concluída!              "
 echo "============================================"
 echo ""
 echo "Acesse seu repositório em:"
-echo "https://github.com/SEU_USERNAME/ifinanceone"
+echo "https://github.com/alceupassos/iFinanceAPP"
 echo ""

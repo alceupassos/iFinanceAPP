@@ -2,7 +2,7 @@
 #!/bin/bash
 
 echo "============================================"
-echo "   GitHub Authentication & Push - iFinanceOne"
+echo "   GitHub Authentication & Push - iFinanceAPP"
 echo "============================================"
 echo ""
 
@@ -22,5 +22,5 @@ echo "   ✓ Push concluído com sucesso!           "
 echo "============================================"
 echo ""
 echo "Acesse seu repositório em:"
-echo "https://github.com/alceupassos/ifinanceone"
+echo "https://github.com/alceupassos/iFinanceAPP"
 echo ""
