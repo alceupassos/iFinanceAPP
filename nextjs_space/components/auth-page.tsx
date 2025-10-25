@@ -44,8 +44,10 @@ export function AuthPage() {
           title: 'Login realizado com sucesso!',
           description: 'Redirecionando para o painel...'
         })
-        // Use replace to avoid adding to history and remove refresh() call
-        router.replace('/')
+        // Force page reload to update session
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 500)
       }
     } catch (error) {
       toast({
@@ -96,8 +98,10 @@ export function AuthPage() {
         })
 
         if (result?.ok) {
-          // Use replace to avoid adding to history and remove refresh() call
-          router.replace('/')
+          // Force page reload to update session
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 500)
         }
       } else {
         const data = await response.json()
@@ -119,7 +123,7 @@ export function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hero Header */}
       <div className="text-center pt-12 pb-8">
         <div className="flex justify-center mb-4">
@@ -130,32 +134,32 @@ export function AuthPage() {
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2">
           iFinanceAI
         </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto px-4">
-          Inteligência Artificial para <span className="font-semibold text-blue-600">Gestão Financeira Corporativa</span>
+        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto px-4">
+          Inteligência Artificial para <span className="font-semibold text-blue-600 dark:text-blue-400">Gestão Financeira Corporativa</span>
         </p>
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto px-4 mb-8">
           <div className="text-center p-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Análise DRE & DFC</h3>
-            <p className="text-sm text-gray-600">Análise inteligente de demonstrativos financeiros com IA</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Análise DRE & DFC</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Análise inteligente de demonstrativos financeiros com IA</p>
           </div>
           <div className="text-center p-4">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Multi-LLM</h3>
-            <p className="text-sm text-gray-600">OpenAI, Anthropic e OpenRouter integrados</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Multi-LLM</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">OpenAI, Anthropic e OpenRouter integrados</p>
           </div>
           <div className="text-center p-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <Shield className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">LGPD Compliant</h3>
-            <p className="text-sm text-gray-600">Segurança e privacidade para o mercado brasileiro</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">LGPD Compliant</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Segurança e privacidade para o mercado brasileiro</p>
           </div>
         </div>
       </div>
@@ -308,7 +312,7 @@ export function AuthPage() {
       </div>
 
       {/* Footer */}
-      <div className="text-center py-8 text-sm text-gray-500">
+      <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
         © 2025 iFinanceAI. Desenvolvido para o mercado brasileiro.
       </div>
     </div>

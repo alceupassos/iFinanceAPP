@@ -251,14 +251,14 @@ Como posso ajudá-lo hoje?`
           <ScrollArea className="h-full p-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center">
-                  <Bot className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30 rounded-full flex items-center justify-center">
+                  <Bot className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                     Bem-vindo ao iFinanceAI
                   </h3>
-                  <p className="text-gray-600 mb-4 max-w-md">
+                  <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
                     Comece uma conversa ou use o template de análise financeira para análises especializadas.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">

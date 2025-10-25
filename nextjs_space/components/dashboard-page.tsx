@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
+import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -18,13 +19,22 @@ import {
   BarChart3, 
   LogOut,
   Menu,
-  X
+  X,
+  Moon,
+  Sun
 } from 'lucide-react'
 
 export function DashboardPage() {
   const { data: session } = useSession() || {}
   const [activeTab, setActiveTab] = useState('chat')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (!session) {
     return (
@@ -39,21 +49,21 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button 
           variant="outline" 
           size="sm"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="bg-white shadow-md"
+          className="bg-white dark:bg-gray-800 shadow-md"
         >
           {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0`}>
         <div className="flex flex-col h-full">
@@ -125,10 +135,29 @@ export function DashboardPage() {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-2">
+            {mounted && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="w-4 h-4 mr-3" />
+                    Modo Claro
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4 mr-3" />
+                    Modo Escuro
+                  </>
+                )}
+              </Button>
+            )}
             <Button 
               variant="outline" 
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
               onClick={handleSignOut}
             >
               <LogOut className="w-4 h-4 mr-3" />
