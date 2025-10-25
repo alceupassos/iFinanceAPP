@@ -16,21 +16,37 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      console.error('[Upload] Tentativa de upload sem autenticação')
+      return NextResponse.json({ error: 'Não autorizado. Faça login para fazer upload.' }, { status: 401 })
     }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
     
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+      console.error('[Upload] Nenhum arquivo foi enviado')
+      return NextResponse.json({ error: 'Nenhum arquivo fornecido' }, { status: 400 })
+    }
+
+    console.log(`[Upload] Processando arquivo: ${file.name} (${file.size} bytes, tipo: ${file.type})`)
+
+    // Validar tamanho do arquivo (max 50MB)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      console.error(`[Upload] Arquivo muito grande: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+      return NextResponse.json({ 
+        error: `Arquivo muito grande. Tamanho máximo: 50MB` 
+      }, { status: 400 })
     }
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer())
+    console.log(`[Upload] Buffer criado: ${buffer.length} bytes`)
     
     // Upload to S3
+    console.log(`[Upload] Iniciando upload para S3...`)
     const cloud_storage_path = await uploadFile(buffer, file.name)
+    console.log(`[Upload] Upload para S3 concluído: ${cloud_storage_path}`)
     
     // Extract text content based on file type
     let extractedText = ''
@@ -84,8 +100,15 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Upload error:', error)
+    
+    // Retorna mensagem de erro mais detalhada
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao fazer upload'
+    
     return NextResponse.json(
-      { error: 'Failed to upload file' },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+      },
       { status: 500 }
     )
   }

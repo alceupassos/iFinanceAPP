@@ -114,20 +114,40 @@ export function ChatInterface() {
 
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
-        const formData = new FormData()
-        formData.append('file', file)
+        try {
+          console.log(`[Upload] Iniciando upload de: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
+          
+          const formData = new FormData()
+          formData.append('file', file)
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        })
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-          throw new Error(errorData.error || `Failed to upload ${file.name}`)
+          console.log(`[Upload] Resposta recebida: Status ${response.status}`)
+
+          if (!response.ok) {
+            let errorMessage = `Erro ao enviar ${file.name}`
+            try {
+              const errorData = await response.json()
+              console.error('[Upload] Erro do servidor:', errorData)
+              errorMessage = errorData.error || errorMessage
+            } catch (jsonError) {
+              // Se não conseguir fazer parse do JSON, usa o status text
+              console.error('[Upload] Não foi possível fazer parse do erro:', jsonError)
+              errorMessage = `Erro ${response.status}: ${response.statusText || 'Erro ao enviar arquivo'}`
+            }
+            throw new Error(errorMessage)
+          }
+
+          const result = await response.json()
+          console.log(`[Upload] Sucesso:`, result)
+          return result
+        } catch (fileError) {
+          console.error(`[Upload] Erro ao processar ${file.name}:`, fileError)
+          throw fileError
         }
-
-        return response.json()
       })
 
       const results = await Promise.all(uploadPromises)

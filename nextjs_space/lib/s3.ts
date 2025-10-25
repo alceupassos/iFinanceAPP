@@ -11,18 +11,44 @@ const s3Client = createS3Client()
 const { bucketName, folderPrefix } = getBucketConfig()
 
 export async function uploadFile(buffer: Buffer, fileName: string): Promise<string> {
-  const key = `${folderPrefix}uploads/${Date.now()}-${fileName}`
-  
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: bucketName,
-      Key: key,
-      Body: buffer,
-      ContentType: getContentType(fileName)
-    })
-  )
-  
-  return key
+  try {
+    if (!bucketName) {
+      throw new Error('AWS_BUCKET_NAME não configurado. Verifique as variáveis de ambiente.')
+    }
+
+    const key = `${folderPrefix}uploads/${Date.now()}-${fileName}`
+    
+    console.log(`[S3] Uploading to bucket: ${bucketName}, key: ${key}`)
+    
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: getContentType(fileName)
+      })
+    )
+    
+    console.log(`[S3] Upload successful: ${key}`)
+    return key
+  } catch (error) {
+    console.error('[S3] Upload error:', error)
+    
+    if (error instanceof Error) {
+      // Mensagens de erro mais amigáveis para problemas comuns do S3
+      if (error.message.includes('Access Denied') || error.message.includes('AccessDenied')) {
+        throw new Error('Erro de permissão no S3. Verifique as credenciais AWS.')
+      } else if (error.message.includes('NoSuchBucket')) {
+        throw new Error(`Bucket S3 não encontrado: ${bucketName}`)
+      } else if (error.message.includes('InvalidAccessKeyId')) {
+        throw new Error('Credenciais AWS inválidas.')
+      } else if (error.message.includes('SignatureDoesNotMatch')) {
+        throw new Error('Assinatura AWS incorreta. Verifique as credenciais.')
+      }
+    }
+    
+    throw error
+  }
 }
 
 export async function downloadFile(key: string): Promise<string> {
