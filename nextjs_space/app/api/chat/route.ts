@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import Groq from 'groq-sdk'
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -48,24 +49,73 @@ export async function POST(request: NextRequest) {
       content: msg.content
     }))
 
-    // Call LLM API with streaming
-    const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.ABACUSAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: apiMessages,
+    // Choose API based on provider
+    let response: Response
+
+    if (provider === 'groq' || model.includes('llama') || model.includes('mixtral')) {
+      // Use GROQ API
+      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+      
+      // Map model names to GROQ models
+      const groqModel = model.includes('llama-3.1-70b') ? 'llama-3.1-70b-versatile' :
+                       model.includes('llama-3.1-8b') ? 'llama-3.1-8b-instant' :
+                       model.includes('llama') ? 'llama-3.1-8b-instant' :
+                       model.includes('mixtral') ? 'mixtral-8x7b-32768' :
+                       'llama-3.1-8b-instant'
+
+      const groqStream = await groq.chat.completions.create({
+        model: groqModel,
+        messages: apiMessages as any,
         stream: true,
         max_tokens: 3000,
         temperature: 0.7
-      }),
-    })
+      })
 
-    if (!response.ok) {
-      throw new Error(`LLM API error: ${response.status}`)
+      // Convert GROQ stream to Response
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of groqStream) {
+              const content = chunk.choices[0]?.delta?.content || ''
+              if (content) {
+                const sseData = `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`
+                controller.enqueue(encoder.encode(sseData))
+              }
+            }
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+            controller.close()
+          } catch (error) {
+            controller.error(error)
+          }
+        }
+      })
+
+      response = new Response(stream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+        }
+      })
+    } else {
+      // Use Abacus AI API
+      response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.ABACUSAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: apiMessages,
+          stream: true,
+          max_tokens: 3000,
+          temperature: 0.7
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`LLM API error: ${response.status}`)
+      }
     }
 
     // Create streaming response

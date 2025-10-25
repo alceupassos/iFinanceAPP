@@ -431,11 +431,12 @@ export function ChatInterface() {
                   <SelectItem value="auto">Auto</SelectItem>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
+                  <SelectItem value="groq">Groq</SelectItem>
                   <SelectItem value="openrouter">OpenRouter</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -443,6 +444,9 @@ export function ChatInterface() {
                   <SelectItem value="gpt-4">GPT-4</SelectItem>
                   <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
                   <SelectItem value="claude-3-haiku">Claude 3 Haiku</SelectItem>
+                  <SelectItem value="llama-3.1-70b">Llama 3.1 70B (Groq)</SelectItem>
+                  <SelectItem value="llama-3.1-8b">Llama 3.1 8B (Groq)</SelectItem>
+                  <SelectItem value="mixtral-8x7b">Mixtral 8x7B (Groq)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
