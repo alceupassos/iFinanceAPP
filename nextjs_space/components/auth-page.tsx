@@ -44,8 +44,8 @@ export function AuthPage() {
           title: 'Login realizado com sucesso!',
           description: 'Redirecionando para o painel...'
         })
-        router.push('/')
-        router.refresh()
+        // Use replace to avoid adding to history and remove refresh() call
+        router.replace('/')
       }
     } catch (error) {
       toast({
@@ -96,8 +96,8 @@ export function AuthPage() {
         })
 
         if (result?.ok) {
-          router.push('/')
-          router.refresh()
+          // Use replace to avoid adding to history and remove refresh() call
+          router.replace('/')
         }
       } else {
         const data = await response.json()
